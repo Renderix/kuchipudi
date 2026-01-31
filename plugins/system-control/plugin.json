@@ -1,0 +1,16 @@
+{
+    "name": "system-control",
+    "version": "1.0.0",
+    "description": "Control system volume, brightness, and media playback",
+    "executable": "system-control",
+    "actions": [
+        "volume-up",
+        "volume-down",
+        "volume-mute",
+        "brightness-up",
+        "brightness-down",
+        "media-play-pause",
+        "media-next",
+        "media-prev"
+    ]
+}

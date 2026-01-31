@@ -5,6 +5,10 @@
 bin/
 dist/
 
+# Plugin binaries
+plugins/*/system-control
+plugins/*/keyboard
+
 # Dependencies
 vendor/
 
