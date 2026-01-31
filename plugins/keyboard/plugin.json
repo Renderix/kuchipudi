@@ -1,0 +1,13 @@
+{
+    "name": "keyboard",
+    "version": "1.0.0",
+    "description": "Send keyboard shortcuts and keystrokes",
+    "executable": "keyboard",
+    "actions": ["keystroke", "shortcut"],
+    "configSchema": {
+        "keystroke": {
+            "key": "string",
+            "modifiers": ["command", "option", "control", "shift"]
+        }
+    }
+}
