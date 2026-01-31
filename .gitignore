@@ -1,0 +1,21 @@
+# Worktrees
+.worktrees/
+
+# Build output
+bin/
+dist/
+
+# Dependencies
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Kuchipudi data
+*.db
