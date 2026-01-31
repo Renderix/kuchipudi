@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuchipudi - Gesture Control</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 class="logo">&#128075; Kuchipudi</h1>
+            <nav>
+                <a href="#" class="nav-link active" data-section="dashboard">Dashboard</a>
+                <a href="#" class="nav-link" data-section="gestures">Gestures</a>
+                <a href="#" class="nav-link" data-section="actions">Actions</a>
+                <a href="#" class="nav-link" data-section="settings">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h2>Dashboard</h2>
+
+            <div class="status-card">
+                <h3>System Status</h3>
+                <div class="status-indicator">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">Checking...</span>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="gesture-count">0</div>
+                    <div class="stat-label">Gestures</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="action-count">0</div>
+                    <div class="stat-label">Actions</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <ul class="activity-list" id="activity-list">
+                    <li class="activity-item">No recent activity</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Gestures Section -->
+        <section id="gestures" class="section">
+            <div class="section-header">
+                <h2>Gestures</h2>
+                <button class="btn btn-primary" id="add-gesture-btn">+ Add Gesture</button>
+            </div>
+
+            <div class="gesture-grid" id="gesture-list">
+                <!-- Gesture cards will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Actions Section -->
+        <section id="actions" class="section">
+            <h2>Actions</h2>
+
+            <div class="card">
+                <h3>Gesture-Action Mappings</h3>
+                <p class="placeholder-text">Configure which actions are triggered by each gesture.</p>
+
+                <div class="mapping-list" id="mapping-list">
+                    <div class="mapping-item">
+                        <span class="mapping-gesture">Wave Left</span>
+                        <span class="mapping-arrow">→</span>
+                        <span class="mapping-action">Previous Slide</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="mapping-gesture">Wave Right</span>
+                        <span class="mapping-arrow">→</span>
+                        <span class="mapping-action">Next Slide</span>
+                    </div>
+                    <div class="mapping-item">
+                        <span class="mapping-gesture">Thumbs Up</span>
+                        <span class="mapping-arrow">→</span>
+                        <span class="mapping-action">Play/Pause</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="section">
+            <h2>Settings</h2>
+
+            <div class="card">
+                <h3>Camera</h3>
+                <div class="form-group">
+                    <label for="camera-select">Select Camera</label>
+                    <select id="camera-select" class="form-control">
+                        <option value="">Loading cameras...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Motion Detection</h3>
+                <div class="form-group">
+                    <label for="sensitivity-slider">Motion Sensitivity</label>
+                    <div class="slider-container">
+                        <input type="range" id="sensitivity-slider" class="slider" min="1" max="10" value="5">
+                        <span id="sensitivity-value">5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Startup</h3>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="start-at-login">
+                        <span>Start Kuchipudi at login</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
