@@ -249,3 +249,10 @@ func (a *App) DynamicMatcher() *gesture.DynamicMatcher {
 func (a *App) PluginManager() *plugin.Manager {
 	return a.pluginMgr
 }
+
+// Detector returns the hand detector.
+func (a *App) Detector() detector.Detector {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.detector
+}

@@ -35,20 +35,14 @@ func TestNewCamera(t *testing.T) {
 				t.Fatal("NewCamera returned nil")
 			}
 
-			if cam.deviceID != tt.deviceID {
-				t.Errorf("deviceID = %d, want %d", cam.deviceID, tt.deviceID)
+			// Check default FPS through public interface
+			if got := cam.FPS(); got != tt.wantFPS {
+				t.Errorf("FPS() = %d, want %d (default)", got, tt.wantFPS)
 			}
 
-			if cam.fps != tt.wantFPS {
-				t.Errorf("fps = %d, want %d (default)", cam.fps, tt.wantFPS)
-			}
-
-			if cam.running {
+			// Camera should not be running initially
+			if cam.IsOpen() {
 				t.Error("camera should not be running initially")
-			}
-
-			if cam.capture != nil {
-				t.Error("capture should be nil initially")
 			}
 		})
 	}

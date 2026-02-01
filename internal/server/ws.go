@@ -22,13 +22,13 @@ var upgrader = websocket.Upgrader{
 // LandmarksHandler broadcasts real-time hand landmarks via WebSocket.
 type LandmarksHandler struct {
 	detector detector.Detector
-	camera   *capture.Camera
+	camera   capture.Camera
 	clients  map[*websocket.Conn]bool
 	mu       sync.RWMutex
 }
 
 // NewLandmarksHandler creates a new LandmarksHandler with the given detector and camera.
-func NewLandmarksHandler(d detector.Detector, c *capture.Camera) *LandmarksHandler {
+func NewLandmarksHandler(d detector.Detector, c capture.Camera) *LandmarksHandler {
 	h := &LandmarksHandler{
 		detector: d,
 		camera:   c,
@@ -48,13 +48,27 @@ func (h *LandmarksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	h.mu.Lock()
+	wasFirstClient := len(h.clients) == 0
 	h.clients[conn] = true
 	h.mu.Unlock()
+
+	// Open camera on first connection
+	if wasFirstClient {
+		if err := h.camera.Open(); err != nil {
+			return
+		}
+	}
 
 	defer func() {
 		h.mu.Lock()
 		delete(h.clients, conn)
+		wasLastClient := len(h.clients) == 0
 		h.mu.Unlock()
+
+		// Close camera when last client disconnects
+		if wasLastClient {
+			h.camera.Close()
+		}
 	}()
 
 	// Keep connection alive by reading messages

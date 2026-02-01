@@ -17,7 +17,7 @@ import (
 type Config struct {
 	StaticDir string
 	Store     *store.Store
-	Camera    *capture.Camera
+	Camera    capture.Camera
 	Detector  detector.Detector
 }
 

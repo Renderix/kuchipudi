@@ -12,11 +12,11 @@ import (
 
 // StreamHandler serves MJPEG frames from the camera.
 type StreamHandler struct {
-	camera *capture.Camera
+	camera capture.Camera
 }
 
 // NewStreamHandler creates a new StreamHandler with the given camera.
-func NewStreamHandler(camera *capture.Camera) *StreamHandler {
+func NewStreamHandler(camera capture.Camera) *StreamHandler {
 	return &StreamHandler{camera: camera}
 }
 
