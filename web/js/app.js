@@ -227,10 +227,10 @@ async function saveSettings() {
 }
 
 /**
- * Show add gesture modal (placeholder)
+ * Navigate to gesture recording page
  */
 function showAddGestureModal() {
-    alert('Add gesture functionality coming soon!');
+    window.location.href = '/record.html';
 }
 
 /**

@@ -17,6 +17,8 @@ const sampleList = document.getElementById('sample-list');
 const sampleCount = document.getElementById('sample-count');
 const recordBtn = document.getElementById('record-btn');
 const saveBtn = document.getElementById('save-btn');
+const cameraLoading = document.getElementById('camera-loading');
+const cameraError = document.getElementById('camera-error');
 
 // Hand landmark connections for drawing
 const HAND_CONNECTIONS = [
@@ -39,9 +41,13 @@ async function initCamera() {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             recordBtn.disabled = false;
+            // Hide loading indicator
+            if (cameraLoading) cameraLoading.style.display = 'none';
         };
     } catch (err) {
-        console.error('Camera error:', err);
+        // Hide loading, show error
+        if (cameraLoading) cameraLoading.style.display = 'none';
+        if (cameraError) cameraError.style.display = 'block';
         alert('Could not access camera. Please grant permission.');
     }
 }
@@ -50,10 +56,6 @@ async function initCamera() {
 function connectWebSocket() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${protocol}//${location.host}/api/landmarks`);
-
-    ws.onopen = () => {
-        console.log('WebSocket connected');
-    };
 
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -76,11 +78,9 @@ function connectWebSocket() {
     };
 
     ws.onerror = (err) => {
-        console.error('WebSocket error:', err);
     };
 
     ws.onclose = () => {
-        console.log('WebSocket closed, reconnecting...');
         setTimeout(connectWebSocket, 1000);
     };
 }
@@ -237,7 +237,6 @@ async function saveGesture() {
         alert('Gesture saved successfully!');
         window.location.href = '/';
     } catch (err) {
-        console.error('Save error:', err);
         alert('Failed to save gesture: ' + err.message);
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Gesture';

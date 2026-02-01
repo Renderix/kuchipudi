@@ -15,17 +15,27 @@
             flex: 2;
             position: relative;
         }
-        .video-panel video,
-        .video-panel canvas {
+        .video-panel video {
             width: 100%;
+            height: auto;
+            max-height: 70vh;
+            object-fit: contain;
             border-radius: 8px;
             background-color: var(--bg-card);
+            display: block;
         }
         .video-panel canvas {
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 8px;
             position: absolute;
             top: 0;
             left: 0;
             pointer-events: none;
+            background-color: transparent;
+            z-index: 10;
         }
         .control-panel {
             flex: 1;
@@ -200,6 +210,13 @@
             <div class="video-panel">
                 <video id="camera" autoplay muted playsinline></video>
                 <canvas id="overlay"></canvas>
+                <div id="camera-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                    <p>Loading camera...</p>
+                </div>
+                <div id="camera-error" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: none;">
+                    <p style="color: var(--error);">Camera access denied or not available</p>
+                    <p>Please allow camera access and refresh the page</p>
+                </div>
             </div>
 
             <div class="control-panel">
@@ -239,6 +256,6 @@
         </div>
     </main>
 
-    <script src="/js/record.js"></script>
+    <script src="/js/record.js?v=3"></script>
 </body>
 </html>
