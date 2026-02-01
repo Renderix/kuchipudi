@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
+	"github.com/ayusman/kuchipudi/internal/app"
 	"github.com/ayusman/kuchipudi/internal/server"
 	"github.com/ayusman/kuchipudi/internal/store"
 )
@@ -37,19 +40,62 @@ func main() {
 		fmt.Printf("Serving static files from: %s\n", webDir)
 	}
 
-	// Configure and start server
+	// Create app with camera and detector
+	pluginDir := filepath.Join(dbDir, "plugins")
+	appCfg := app.Config{
+		Store:        st,
+		PluginDir:    pluginDir,
+		CameraID:     0, // Default camera
+		MotionThresh: 0.05,
+	}
+	application := app.New(appCfg)
+
+	// Load gestures from database
+	if err := application.LoadGestures(); err != nil {
+		log.Printf("Warning: Failed to load gestures: %v", err)
+	}
+
+	// Discover plugins
+	if err := application.DiscoverPlugins(); err != nil {
+		log.Printf("Warning: Failed to discover plugins: %v", err)
+	}
+
+	// NOTE: Don't start app pipeline - let WebSocket handler read camera directly
+	// This avoids camera access conflicts between pipeline and recording UI
+	// application.SetEnabled(true)
+	// if err := application.Start(); err != nil {
+	// 	log.Fatalf("Failed to start detection pipeline: %v", err)
+	// }
+	// defer application.Stop()
+
+	// Configure and start server with app's camera and detector
 	cfg := server.Config{
 		StaticDir: webDir,
 		Store:     st,
+		Camera:    application.Camera(),
+		Detector:  application.Detector(),
 	}
 
 	srv := server.New(cfg)
 
 	addr := ":8080"
 	fmt.Printf("Starting server on %s\n", addr)
-	if err := srv.ListenAndServe(addr); err != nil {
-		log.Fatalf("Server failed: %v", err)
-	}
+	fmt.Println("Open http://localhost:8080 in your browser")
+	fmt.Println("Press Ctrl+C to stop")
+
+	// Start server in a goroutine
+	go func() {
+		if err := srv.ListenAndServe(addr); err != nil {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	<-sigCh
+
+	fmt.Println("\nShutting down...")
 }
 
 // findWebDir searches for the web directory in common locations.
