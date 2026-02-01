@@ -47,6 +47,7 @@ func (s *Server) setupRoutes() {
 	if s.config.Store != nil {
 		gestureHandler := api.NewGestureHandler(s.config.Store)
 		samplesHandler := api.NewSamplesHandler(s.config.Store)
+		actionHandler := api.NewActionHandler(s.config.Store)
 
 		// Use a wrapper to route between gestures and samples handlers
 		gestureRouter := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +61,8 @@ func (s *Server) setupRoutes() {
 
 		s.mux.Handle("/api/gestures", gestureRouter)
 		s.mux.Handle("/api/gestures/", gestureRouter)
+		s.mux.Handle("/api/actions", actionHandler)
+		s.mux.Handle("/api/actions/", actionHandler)
 	}
 
 	// Register camera stream endpoint if Camera is configured

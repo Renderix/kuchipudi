@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ayusman/kuchipudi/internal/gesture"
+	"github.com/ayusman/kuchipudi/internal/plugin"
 )
 
 // runPipeline is the main detection loop that processes frames from the camera.
@@ -143,17 +144,46 @@ func (a *App) runPipeline() {
 }
 
 // executeAction executes the action associated with a recognized gesture.
-// This is a placeholder that logs the action for now.
-// In the future, this will look up the action binding and execute the appropriate plugin.
+// It looks up the action binding in the database and executes the corresponding plugin.
 func (a *App) executeAction(gestureID, gestureName string) {
-	// TODO: Look up action binding for this gesture from the database
-	// TODO: Execute the appropriate plugin action
+	// Skip if no store configured
+	if a.config.Store == nil {
+		return
+	}
 
-	log.Printf("Action triggered for gesture: %s (ID: %s)", gestureName, gestureID)
+	// Look up action binding
+	action, err := a.config.Store.Actions().GetByGestureID(gestureID)
+	if err != nil {
+		log.Printf("Error looking up action: %v", err)
+		return
+	}
+	if action == nil || !action.Enabled {
+		return // No action bound or disabled - silent skip
+	}
 
-	// Placeholder: In the future, this will:
-	// 1. Look up the action binding in the database
-	// 2. Get the plugin name and action type
-	// 3. Build a plugin.Request
-	// 4. Execute via a.pluginExec.Execute()
+	// Get plugin
+	plug, err := a.pluginMgr.Get(action.PluginName)
+	if err != nil {
+		log.Printf("Plugin not found: %s", action.PluginName)
+		return
+	}
+
+	// Build request
+	req := &plugin.Request{
+		Action:  action.ActionName,
+		Gesture: gestureName,
+		Config:  action.Config,
+	}
+
+	// Execute async to not block pipeline
+	go func() {
+		resp, err := a.pluginExec.Execute(plug, req)
+		if err != nil {
+			log.Printf("Plugin execution failed: %v", err)
+			return
+		}
+		if !resp.Success {
+			log.Printf("Plugin returned error: %s", resp.Error)
+		}
+	}()
 }
