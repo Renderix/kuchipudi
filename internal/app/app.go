@@ -54,7 +54,7 @@ func New(config Config) *App {
 		motionThreshold = 1.0 // Default threshold: 1% pixel change
 	}
 
-	return &App{
+	a := &App{
 		config:         config,
 		camera:         capture.NewCamera(config.CameraID),
 		motion:         capture.NewMotionDetector(motionThreshold),
@@ -65,6 +65,17 @@ func New(config Config) *App {
 		enabled:        false,
 		stopCh:         nil,
 	}
+
+	// Try MediaPipe first, fall back to mock detector
+	if mp, err := detector.NewMediaPipeDetector(detector.DefaultConfig()); err == nil {
+		a.detector = mp
+		log.Println("Using MediaPipe hand detection")
+	} else {
+		log.Printf("MediaPipe not available (%v), using mock detector", err)
+		a.detector = detector.NewMockDetector()
+	}
+
+	return a
 }
 
 // SetEnabled enables or disables gesture detection.
