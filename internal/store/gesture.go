@@ -30,6 +30,22 @@ type Gesture struct {
 	UpdatedAt time.Time
 }
 
+// Landmark represents a single 3D point from the gesture_landmarks table.
+type Landmark struct {
+	Index int
+	X     float64
+	Y     float64
+	Z     float64
+}
+
+// PathPoint represents a point in a gesture path from the gesture_paths table.
+type PathPoint struct {
+	Sequence    int
+	X           float64
+	Y           float64
+	TimestampMs int64
+}
+
 // GestureRepository provides CRUD operations for gestures.
 type GestureRepository struct {
 	db *sql.DB
@@ -176,4 +192,62 @@ func (r *GestureRepository) Delete(id string) error {
 	}
 
 	return nil
+}
+
+// GetLandmarks retrieves the normalized landmarks for a static gesture.
+// Returns an empty slice if no landmarks are stored (gesture not yet trained).
+func (r *GestureRepository) GetLandmarks(gestureID string) ([]Landmark, error) {
+	rows, err := r.db.Query(
+		`SELECT landmark_index, x, y, z FROM gesture_landmarks
+		 WHERE gesture_id = ? ORDER BY landmark_index`,
+		gestureID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var landmarks []Landmark
+	for rows.Next() {
+		var l Landmark
+		if err := rows.Scan(&l.Index, &l.X, &l.Y, &l.Z); err != nil {
+			return nil, err
+		}
+		landmarks = append(landmarks, l)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return landmarks, nil
+}
+
+// GetPath retrieves the path points for a dynamic gesture.
+// Returns an empty slice if no path is stored (gesture not yet trained).
+func (r *GestureRepository) GetPath(gestureID string) ([]PathPoint, error) {
+	rows, err := r.db.Query(
+		`SELECT sequence, x, y, timestamp_ms FROM gesture_paths
+		 WHERE gesture_id = ? ORDER BY sequence`,
+		gestureID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var path []PathPoint
+	for rows.Next() {
+		var p PathPoint
+		if err := rows.Scan(&p.Sequence, &p.X, &p.Y, &p.TimestampMs); err != nil {
+			return nil, err
+		}
+		path = append(path, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return path, nil
 }

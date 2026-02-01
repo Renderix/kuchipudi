@@ -120,17 +120,46 @@ func (a *App) LoadGestures() error {
 		switch g.Type {
 		case store.GestureTypeStatic:
 			template.Type = gesture.TypeStatic
-			// TODO: Load landmark data from separate table when implemented
+			landmarks, err := a.config.Store.Gestures().GetLandmarks(g.ID)
+			if err != nil {
+				log.Printf("Failed to load landmarks for %s: %v", g.Name, err)
+			} else if len(landmarks) > 0 {
+				template.Landmarks = storeLandmarksToDetector(landmarks)
+			}
 			a.staticMatcher.AddTemplate(template)
+
 		case store.GestureTypeDynamic:
 			template.Type = gesture.TypeDynamic
-			// TODO: Load path data from separate table when implemented
+			path, err := a.config.Store.Gestures().GetPath(g.ID)
+			if err != nil {
+				log.Printf("Failed to load path for %s: %v", g.Name, err)
+			} else if len(path) > 0 {
+				template.Path = storePathToGesture(path)
+			}
 			a.dynamicMatcher.AddTemplate(template)
 		}
 	}
 
 	log.Printf("Loaded %d gestures from database", len(gestures))
 	return nil
+}
+
+// storeLandmarksToDetector converts store.Landmark slice to detector.Point3D slice.
+func storeLandmarksToDetector(landmarks []store.Landmark) []detector.Point3D {
+	points := make([]detector.Point3D, len(landmarks))
+	for i, l := range landmarks {
+		points[i] = detector.Point3D{X: l.X, Y: l.Y, Z: l.Z}
+	}
+	return points
+}
+
+// storePathToGesture converts store.PathPoint slice to gesture.PathPoint slice.
+func storePathToGesture(path []store.PathPoint) []gesture.PathPoint {
+	points := make([]gesture.PathPoint, len(path))
+	for i, p := range path {
+		points[i] = gesture.PathPoint{X: p.X, Y: p.Y, Timestamp: p.TimestampMs}
+	}
+	return points
 }
 
 // DiscoverPlugins scans the plugin directory and loads available plugins.
