@@ -111,7 +111,13 @@ func (d *MediaPipeDetector) ensureStarted() error {
 		return fmt.Errorf("mediapipe_service.py not found")
 	}
 
-	d.cmd = exec.Command("python3", scriptPath)
+	// Use virtual environment Python if available
+	pythonPath := findVenvPython()
+	if pythonPath == "" {
+		pythonPath = "python3"
+	}
+
+	d.cmd = exec.Command(pythonPath, scriptPath)
 
 	stdin, err := d.cmd.StdinPipe()
 	if err != nil {
@@ -185,6 +191,36 @@ func findMediaPipeScript() string {
 		"../scripts/mediapipe_service.py",
 		filepath.Join(execDir, "scripts/mediapipe_service.py"),
 		filepath.Join(os.Getenv("HOME"), ".kuchipudi/scripts/mediapipe_service.py"),
+	}
+
+	for _, path := range candidates {
+		if _, err := os.Stat(path); err == nil {
+			absPath, err := filepath.Abs(path)
+			if err == nil {
+				return absPath
+			}
+			return path
+		}
+	}
+	return ""
+}
+
+// findVenvPython looks for a Python interpreter in a virtual environment.
+// It checks for venv/bin/python relative to the project directory.
+func findVenvPython() string {
+	// Get executable directory to find project root
+	execPath, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	execDir := filepath.Dir(execPath)
+
+	candidates := []string{
+		"venv/bin/python",
+		"../venv/bin/python",
+		"../../venv/bin/python",
+		filepath.Join(execDir, "venv/bin/python"),
+		filepath.Join(os.Getenv("HOME"), ".kuchipudi/venv/bin/python"),
 	}
 
 	for _, path := range candidates {

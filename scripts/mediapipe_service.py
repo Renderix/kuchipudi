@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MediaPipe hand detection service.
+MediaPipe hand detection service for v0.10+ (Task API).
 Reads JPEG frames from stdin, outputs JSON landmarks to stdout.
 
 Protocol:
@@ -13,18 +13,35 @@ import struct
 import json
 import cv2
 import numpy as np
+import os
+
+# MediaPipe 0.10+ Task API
 import mediapipe as mp
+from mediapipe.tasks.python.vision import HandLandmarker, HandLandmarkerOptions, RunningMode
+from mediapipe.tasks.python.core.base_options import BaseOptions
 
-mp_hands = mp.solutions.hands
+# Find model file
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(SCRIPT_DIR, 'hand_landmarker.task')
 
+if not os.path.exists(MODEL_PATH):
+    print(f"Error: Model file not found at {MODEL_PATH}", file=sys.stderr)
+    sys.exit(1)
 
 def main():
-    hands = mp_hands.Hands(
-        static_image_mode=False,
-        max_num_hands=2,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5
+    # Configure options
+    base_options = BaseOptions(model_asset_path=MODEL_PATH)
+    options = HandLandmarkerOptions(
+        base_options=base_options,
+        num_hands=2,
+        min_hand_detection_confidence=0.5,
+        min_hand_presence_confidence=0.5,
+        min_tracking_confidence=0.5,
+        running_mode=RunningMode.IMAGE
     )
+    
+    # Create detector
+    detector = HandLandmarker.create_from_options(options)
 
     while True:
         # Read frame length (4 bytes, big-endian)
@@ -41,38 +58,41 @@ def main():
 
         # Decode image
         nparr = np.frombuffer(jpeg_data, np.uint8)
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        image_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        if image is None:
+        if image_bgr is None:
             print(json.dumps({"hands": []}), flush=True)
             continue
 
         # Convert BGR to RGB
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        
+        # Create MediaPipe Image
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image_rgb)
 
-        # Process
-        results = hands.process(image_rgb)
+        # Detect
+        detection_result = detector.detect(mp_image)
 
         # Format output
         output = {"hands": []}
 
-        if results.multi_hand_landmarks:
-            for i, hand_landmarks in enumerate(results.multi_hand_landmarks):
+        if detection_result.hand_landmarks:
+            for i, hand_landmarks in enumerate(detection_result.hand_landmarks):
                 handedness = "Right"
-                if results.multi_handedness:
-                    handedness = results.multi_handedness[i].classification[0].label
+                score = 0.9
+                
+                if detection_result.handedness and i < len(detection_result.handedness):
+                    handedness_info = detection_result.handedness[i][0]
+                    handedness = handedness_info.category_name
+                    score = handedness_info.score
 
                 points = []
-                for lm in hand_landmarks.landmark:
+                for lm in hand_landmarks:
                     points.append({
                         "x": lm.x,
                         "y": lm.y,
                         "z": lm.z
                     })
-
-                score = 0.9
-                if results.multi_handedness:
-                    score = results.multi_handedness[i].classification[0].score
 
                 output["hands"].append({
                     "points": points,
@@ -81,8 +101,6 @@ def main():
                 })
 
         print(json.dumps(output), flush=True)
-
-    hands.close()
 
 
 if __name__ == "__main__":
