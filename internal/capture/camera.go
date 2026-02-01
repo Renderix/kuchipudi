@@ -27,8 +27,18 @@ type Frame struct {
 	Height    int
 }
 
-// Camera manages video capture from a camera device using GoCV.
-type Camera struct {
+// Camera defines the interface for camera capture implementations.
+type Camera interface {
+	Open() error
+	Close() error
+	ReadFrame() (*gocv.Mat, error)
+	SetFPS(fps int)
+	FPS() int
+	IsOpen() bool
+}
+
+// cameraImpl manages video capture from a camera device using GoCV.
+type cameraImpl struct {
 	deviceID int
 	capture  *gocv.VideoCapture
 	mu       sync.Mutex
@@ -38,8 +48,8 @@ type Camera struct {
 
 // NewCamera creates a new Camera with the given device ID.
 // The default FPS is 5 for performance reasons.
-func NewCamera(deviceID int) *Camera {
-	return &Camera{
+func NewCamera(deviceID int) Camera {
+	return &cameraImpl{
 		deviceID: deviceID,
 		fps:      DefaultFPS,
 		running:  false,
@@ -49,7 +59,7 @@ func NewCamera(deviceID int) *Camera {
 
 // Open opens the camera for capturing frames.
 // It sets the resolution to 640x480 for performance.
-func (c *Camera) Open() error {
+func (c *cameraImpl) Open() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -74,7 +84,7 @@ func (c *Camera) Open() error {
 }
 
 // Close closes the camera and releases resources.
-func (c *Camera) Close() error {
+func (c *cameraImpl) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -92,7 +102,7 @@ func (c *Camera) Close() error {
 
 // ReadFrame reads a single frame from the camera.
 // The caller is responsible for closing the returned Mat.
-func (c *Camera) ReadFrame() (*gocv.Mat, error) {
+func (c *cameraImpl) ReadFrame() (*gocv.Mat, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -116,7 +126,7 @@ func (c *Camera) ReadFrame() (*gocv.Mat, error) {
 
 // SetFPS sets the frames per second for capture.
 // Values less than or equal to 0 are ignored.
-func (c *Camera) SetFPS(fps int) {
+func (c *cameraImpl) SetFPS(fps int) {
 	if fps <= 0 {
 		return
 	}
@@ -132,7 +142,7 @@ func (c *Camera) SetFPS(fps int) {
 }
 
 // FPS returns the current frames per second setting.
-func (c *Camera) FPS() int {
+func (c *cameraImpl) FPS() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -140,7 +150,7 @@ func (c *Camera) FPS() int {
 }
 
 // IsOpen returns true if the camera is currently open and running.
-func (c *Camera) IsOpen() bool {
+func (c *cameraImpl) IsOpen() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

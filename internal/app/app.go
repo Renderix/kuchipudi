@@ -4,6 +4,7 @@ package app
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/ayusman/kuchipudi/internal/capture"
 	"github.com/ayusman/kuchipudi/internal/detector"
@@ -35,7 +36,7 @@ type Config struct {
 // App is the main application that orchestrates gesture detection and action execution.
 type App struct {
 	config         Config
-	camera         *capture.Camera
+	camera         capture.Camera
 	motion         *capture.MotionDetector
 	detector       detector.Detector
 	staticMatcher  *gesture.StaticMatcher
@@ -45,6 +46,7 @@ type App struct {
 	enabled        bool
 	mu             sync.RWMutex
 	stopCh         chan struct{}
+	lastMotionTime time.Time
 }
 
 // New creates a new App instance with the given configuration.
@@ -64,6 +66,7 @@ func New(config Config) *App {
 		pluginExec:     plugin.NewExecutor(5000), // 5 second timeout for plugin execution
 		enabled:        false,
 		stopCh:         nil,
+		lastMotionTime: time.Now(),
 	}
 
 	// Try MediaPipe first, fall back to mock detector
@@ -223,7 +226,7 @@ func (a *App) Stop() {
 }
 
 // Camera returns the camera instance.
-func (a *App) Camera() *capture.Camera {
+func (a *App) Camera() capture.Camera {
 	return a.camera
 }
 

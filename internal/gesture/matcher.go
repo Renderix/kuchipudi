@@ -45,6 +45,7 @@ type Match struct {
 // StaticMatcher matches static hand gestures against registered templates.
 type StaticMatcher struct {
 	templates []*Template
+	OnMatch   func(id, name string)
 }
 
 // NewStaticMatcher creates a new StaticMatcher instance.

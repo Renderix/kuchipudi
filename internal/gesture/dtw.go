@@ -71,6 +71,7 @@ func max(a, b int) int {
 // DynamicMatcher matches dynamic gestures against registered templates using DTW.
 type DynamicMatcher struct {
 	templates []*Template
+	OnMatch   func(id, name string)
 }
 
 // NewDynamicMatcher creates a new DynamicMatcher instance.
