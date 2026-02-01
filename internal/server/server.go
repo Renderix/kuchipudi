@@ -4,8 +4,11 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/ayusman/kuchipudi/internal/capture"
+	"github.com/ayusman/kuchipudi/internal/detector"
 	"github.com/ayusman/kuchipudi/internal/server/api"
 	"github.com/ayusman/kuchipudi/internal/store"
 )
@@ -14,6 +17,8 @@ import (
 type Config struct {
 	StaticDir string
 	Store     *store.Store
+	Camera    *capture.Camera
+	Detector  detector.Detector
 }
 
 // Server represents the HTTP server for the Kuchipudi application.
@@ -41,8 +46,32 @@ func (s *Server) setupRoutes() {
 	// Register gesture API handler if Store is configured
 	if s.config.Store != nil {
 		gestureHandler := api.NewGestureHandler(s.config.Store)
-		s.mux.Handle("/api/gestures", gestureHandler)
-		s.mux.Handle("/api/gestures/", gestureHandler)
+		samplesHandler := api.NewSamplesHandler(s.config.Store)
+
+		// Use a wrapper to route between gestures and samples handlers
+		gestureRouter := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check if this is a samples request: /api/gestures/{id}/samples
+			if strings.HasSuffix(r.URL.Path, "/samples") {
+				samplesHandler.ServeHTTP(w, r)
+				return
+			}
+			gestureHandler.ServeHTTP(w, r)
+		})
+
+		s.mux.Handle("/api/gestures", gestureRouter)
+		s.mux.Handle("/api/gestures/", gestureRouter)
+	}
+
+	// Register camera stream endpoint if Camera is configured
+	if s.config.Camera != nil {
+		streamHandler := NewStreamHandler(s.config.Camera)
+		s.mux.Handle("/api/stream", streamHandler)
+	}
+
+	// Register landmarks WebSocket endpoint if Camera and Detector are configured
+	if s.config.Camera != nil && s.config.Detector != nil {
+		landmarksHandler := NewLandmarksHandler(s.config.Detector, s.config.Camera)
+		s.mux.Handle("/api/landmarks", landmarksHandler)
 	}
 
 	// Serve static files if StaticDir is configured

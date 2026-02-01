@@ -51,10 +51,20 @@ func (s *Store) runMigrations() error {
 			value TEXT NOT NULL
 		)`,
 
+		// Gesture samples table - stores raw recorded samples for training
+		`CREATE TABLE IF NOT EXISTS gesture_samples (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			gesture_id TEXT NOT NULL REFERENCES gestures(id) ON DELETE CASCADE,
+			sample_index INTEGER NOT NULL,
+			data TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+
 		// Indexes for better query performance
 		`CREATE INDEX IF NOT EXISTS idx_gesture_landmarks_gesture_id ON gesture_landmarks(gesture_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_gesture_paths_gesture_id ON gesture_paths(gesture_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_actions_gesture_id ON actions(gesture_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_gesture_samples_gesture_id ON gesture_samples(gesture_id)`,
 	}
 
 	for _, migration := range migrations {

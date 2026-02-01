@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Gesture - Kuchipudi</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .record-container {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .video-panel {
+            flex: 2;
+            position: relative;
+        }
+        .video-panel video,
+        .video-panel canvas {
+            width: 100%;
+            border-radius: 8px;
+            background-color: var(--bg-card);
+        }
+        .video-panel canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        .control-panel {
+            flex: 1;
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .control-panel h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+        }
+        .control-panel h3 {
+            margin: 1.5rem 0 1rem;
+            font-size: 1rem;
+            color: var(--text);
+        }
+        .control-panel label {
+            display: block;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+        .control-panel label span {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .control-panel input[type="text"],
+        .control-panel select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        .control-panel input[type="text"]:focus,
+        .control-panel select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .sample-list {
+            margin: 1rem 0;
+        }
+        .sample-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+        }
+        .sample-item.recording {
+            border: 2px solid var(--primary);
+            animation: pulse 1s infinite;
+        }
+        .sample-item span {
+            flex: 1;
+        }
+        .sample-item button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .sample-item button:hover {
+            color: var(--error);
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .record-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .record-btn:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+        .record-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .record-btn.recording {
+            background: var(--error);
+        }
+        .save-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            background-color: var(--success);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .save-btn:hover:not(:disabled) {
+            filter: brightness(1.1);
+        }
+        .save-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .instructions {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .text-muted {
+            color: var(--text-muted);
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        .page-header nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        .page-header nav a:hover {
+            color: var(--text);
+        }
+        @media (max-width: 768px) {
+            .record-container {
+                flex-direction: column;
+            }
+            .video-panel {
+                order: 1;
+            }
+            .control-panel {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <h1>Record Gesture</h1>
+        <nav>
+            <a href="/">Back to Dashboard</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="record-container">
+            <div class="video-panel">
+                <video id="camera" autoplay muted playsinline></video>
+                <canvas id="overlay"></canvas>
+            </div>
+
+            <div class="control-panel">
+                <h2>New Gesture</h2>
+
+                <label>
+                    <span>Gesture Name</span>
+                    <input type="text" id="gesture-name" placeholder="e.g., thumbs-up">
+                </label>
+
+                <label>
+                    <span>Type</span>
+                    <select id="gesture-type">
+                        <option value="static">Static (pose)</option>
+                        <option value="dynamic">Dynamic (movement)</option>
+                    </select>
+                </label>
+
+                <div class="instructions">
+                    <p id="static-instructions">Hold your hand pose steady and click Record to capture.</p>
+                    <p id="dynamic-instructions" style="display:none">Perform the gesture motion. Recording will capture 2 seconds of movement.</p>
+                </div>
+
+                <h3>Samples (<span id="sample-count">0</span>/5)</h3>
+                <div class="sample-list" id="sample-list">
+                    <p class="text-muted">No samples recorded yet</p>
+                </div>
+
+                <button class="record-btn" id="record-btn" disabled>
+                    Record Sample
+                </button>
+
+                <button class="save-btn" id="save-btn" disabled>
+                    Save Gesture
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/record.js"></script>
+</body>
+</html>
